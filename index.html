@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Human Verification</title>
+<title>I'm Not a Robot</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -11,15 +11,16 @@
 
   body {
     font-family: Roboto, -apple-system, "Segoe UI", Arial, sans-serif;
-    background: #fafafa;
+    background: linear-gradient(180deg, #eef1f4, #e3e7ec);
     color: #1f1f1f;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    overflow: hidden;
   }
 
-  /* ===== reCAPTCHA-style widget ===== */
+  /* ===== reCAPTCHA widget ===== */
   .card {
     background: #f9f9f9;
     border: 1px solid #d3d3d3;
@@ -27,21 +28,13 @@
     width: 304px;
     padding: 12px 12px 10px;
     box-shadow: 0 0 4px 1px rgba(0,0,0,0.08);
-    transition: border-color .5s ease, box-shadow .5s ease, transform .3s ease;
+    transition: border-color .5s ease, box-shadow .5s ease;
+    z-index: 2;
   }
-  .card.success {
-    border-color: #d1e7d9;
-    box-shadow: 0 0 4px 1px rgba(0,158,85,0.18), 0 0 18px rgba(0,158,85,0.12);
-  }
+  .card.success { border-color: #d1e7d9; box-shadow: 0 0 4px 1px rgba(0,158,85,0.18); }
 
-  .card-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 34px;
-  }
+  .card-row { display: flex; align-items: center; gap: 12px; min-height: 34px; }
 
-  /* checkbox box: holds checkbox / spinner / green check in the same slot */
   .checkbox {
     width: 28px; height: 28px;
     border: 2px solid #c1c1c1;
@@ -54,82 +47,219 @@
     transition: border-color .35s ease, background .35s ease, transform .2s ease;
   }
   .checkbox:hover { border-color: #b0b0b0; transform: scale(1.05); }
-  .checkbox.hidden { border-color: transparent; background: transparent; cursor: default; transform: scale(0.9); }
-  .checkbox.checked { border-color: transparent; background: transparent; cursor: default; }
-
+  .checkbox.hidden { border-color: transparent; background: transparent; transform: scale(0.9); }
+  .checkbox.checked { border-color: transparent; background: transparent; }
   .checkbox svg.check {
     width: 30px; height: 30px;
-    opacity: 0;
-    transform: scale(0.2) rotate(-30deg);
+    opacity: 0; transform: scale(0.2) rotate(-30deg);
     transition: all .45s cubic-bezier(.34,1.56,.64,1) .1s;
   }
   .checkbox.checked svg.check { opacity: 1; transform: scale(1) rotate(0deg); }
 
-  /* reCAPTCHA-style spinner (blue arc) */
   .spin {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transform: scale(0.5);
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transform: scale(0.5);
     transition: opacity .3s ease, transform .3s ease;
     pointer-events: none;
   }
   .spin.show { opacity: 1; transform: scale(1); }
   .spin .ring {
-    width: 24px; height: 24px;
-    border-radius: 50%;
+    width: 24px; height: 24px; border-radius: 50%;
     border: 3px solid transparent;
-    border-top-color: #4285f4;
-    border-right-color: #4285f4;
+    border-top-color: #4285f4; border-right-color: #4285f4;
     border-bottom-color: rgba(66,133,244,0.35);
     animation: rot .9s linear infinite;
   }
   @keyframes rot { to { transform: rotate(360deg); } }
 
-  .card-row .label { font-size: 14px; color: #000; user-select: none; transition: color .5s ease; }
-  .card.success .card-row .label { color: #009e55; }
-
+  .card-row .label { font-size: 14px; color: #000; user-select: none; }
   .card-row .hint {
-    margin-left: auto;
-    font-size: 10px;
-    color: #9aa0a6;
-    text-align: right;
-    line-height: 1.5;
-    opacity: 0;
-    transform: translateX(8px);
+    margin-left: auto; font-size: 10px; color: #9aa0a6;
+    text-align: right; line-height: 1.5;
+    opacity: 0; transform: translateX(8px);
     transition: opacity .35s ease, transform .35s ease;
     pointer-events: none;
   }
   .card-row .hint.show { opacity: 1; transform: translateX(0); }
 
-  /* success pulse on the check mark */
   @keyframes pulse {
     0%   { box-shadow: 0 0 0 0 rgba(0,158,85,0.35); }
     100% { box-shadow: 0 0 0 22px rgba(0,158,85,0); }
   }
   .checkbox.checked { animation: pulse 1s ease-out 0.15s; }
 
-  /* footer: reCAPTCHA logo + links, like the real widget */
-  .card-foot {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 8px;
-    text-align: center;
-  }
-  .brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    line-height: 1;
-  }
+  .card-foot { display: flex; justify-content: flex-end; margin-top: 8px; text-align: center; }
+  .brand { display: flex; flex-direction: column; align-items: center; line-height: 1; }
   .brand svg { width: 30px; height: 30px; }
   .brand .name { font-size: 10px; color: #9aa0a6; margin-top: 3px; }
   .brand .links { font-size: 8px; color: #9aa0a6; margin-top: 3px; }
   .brand .links a { color: #9aa0a6; text-decoration: none; }
   .brand .links a:hover { text-decoration: underline; }
+
+  /* ===== challenge overlay ===== */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(30,35,45,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  .modal {
+    width: 380px;
+    max-width: calc(100vw - 24px);
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.28);
+    overflow: hidden;
+    transform: scale(0.94);
+    transition: transform .25s cubic-bezier(.34,1.4,.64,1);
+  }
+  .overlay.show .modal { transform: scale(1); }
+  .modal.shake { animation: shake .4s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-9px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(4px); }
+  }
+
+  .modal-head { padding: 16px 20px 10px; }
+  .modal-head .lvl { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #9aa0a6; text-transform: uppercase; }
+  .modal-head h2 { font-size: 17px; font-weight: 500; color: #202124; margin-top: 2px; }
+  .modal-head p { font-size: 12.5px; color: #5f6368; margin-top: 4px; min-height: 16px; }
+
+  .modal-body { padding: 6px 20px 4px; min-height: 60px; }
+
+  .modal-foot { display: flex; align-items: center; padding: 10px 20px 16px; gap: 8px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 6px; border: none;
+    background: transparent; color: #5f6368;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background .12s ease;
+  }
+  .icon-btn:hover { background: #f1f3f4; color: #202124; }
+  .icon-btn svg { width: 20px; height: 20px; }
+  .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .action-btn {
+    margin-left: auto;
+    padding: 9px 22px; border: none; border-radius: 4px;
+    background: #4a90e2; color: #fff;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: background .12s ease, transform .1s ease;
+  }
+  .action-btn:hover { background: #3a7bc8; }
+  .action-btn:active { transform: scale(0.97); }
+  .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .status {
+    padding: 0 20px; font-size: 12.5px; color: #d93025;
+    min-height: 20px; opacity: 0; transition: opacity .3s ease;
+  }
+  .status.show { opacity: 1; }
+  .status.ok { color: #1e9e57; }
+
+  /* grid tiles */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .grid.g4 { grid-template-columns: repeat(4, 1fr); }
+  .tile {
+    aspect-ratio: 1; border-radius: 6px;
+    background: #f1f3f4; border: 2px solid transparent;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all .12s ease;
+    position: relative;
+  }
+  .tile svg { width: 46px; height: 46px; color: #3c4043; pointer-events: none; }
+  .tile:hover { background: #e8eaed; }
+  .tile.selected { border-color: #4a90e2; background: #e8f0fe; }
+  .tile.selected::after {
+    content: ""; position: absolute; top: 5px; right: 5px;
+    width: 16px; height: 16px; background-color: #4a90e2;
+    -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>') center / contain no-repeat;
+            mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>') center / contain no-repeat;
+  }
+
+  /* text input levels */
+  .type-row { display: flex; gap: 8px; align-items: center; }
+  .type-row input {
+    flex: 1; padding: 10px 12px;
+    border: 1px solid #d0d0d0; border-radius: 4px;
+    font-size: 16px; font-family: "Courier New", monospace;
+    letter-spacing: 4px; text-transform: uppercase;
+    outline: none; transition: border-color .15s ease;
+  }
+  .type-row input:focus { border-color: #4a90e2; }
+
+  /* wiggly text */
+  .wiggle-box {
+    background: #f6f7f9; border: 1px solid #e0e0e0; border-radius: 6px;
+    padding: 18px 10px; text-align: center; margin-bottom: 10px;
+    overflow: hidden; user-select: none;
+  }
+  .wiggle-box span {
+    display: inline-block;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 34px; font-weight: 700; color: #2b2f36;
+    margin: 0 5px;
+    animation: wig 1.4s ease-in-out infinite alternate;
+  }
+  @keyframes wig {
+    from { transform: translateY(-4px) rotate(-8deg) scaleY(1.1); }
+    to   { transform: translateY(4px)  rotate(9deg)  scaleY(0.9); }
+  }
+
+  /* circle drawing */
+  .draw-wrap { position: relative; }
+  .draw-wrap canvas { display: block; width: 100%; border-radius: 6px; background: #f6f7f9; border: 1px solid #e0e0e0; cursor: crosshair; touch-action: none; }
+  .draw-score {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 15px; font-weight: 700; color: #5f6368;
+    background: rgba(255,255,255,0.85); border-radius: 6px; padding: 4px 10px;
+  }
+
+  /* rotate level */
+  .rot-stage { display: flex; align-items: center; justify-content: center; padding: 10px 0; }
+  .rot-stage .obj { width: 150px; height: 150px; cursor: grab; transition: box-shadow .2s ease; border-radius: 50%; }
+  .rot-stage .obj:active { cursor: grabbing; }
+
+  /* whack-a-mole */
+  .mole-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .hole {
+    aspect-ratio: 1; border-radius: 8px;
+    background: #e7d8bd; border: 2px solid #d9c49e;
+    display: flex; align-items: flex-end; justify-content: center;
+    cursor: pointer; overflow: hidden; position: relative;
+  }
+  .hole svg { width: 70%; height: 80%; transform: translateY(100%); transition: transform .15s ease; pointer-events: none; }
+  .hole.up svg { transform: translateY(8%); }
+
+  /* success screen */
+  .final { text-align: center; padding: 24px 10px 14px; }
+  .final h2 { font-size: 24px; color: #1e9e57; margin-bottom: 6px; }
+  .final p { font-size: 13px; color: #5f6368; }
+  .final .cert {
+    margin: 14px auto 0; display: inline-block;
+    border: 2px dashed #b7dfc9; border-radius: 10px;
+    padding: 12px 22px; color: #1e9e57; font-weight: 700;
+    background: #f2faf5;
+  }
+
+  .confetti {
+    position: fixed; top: -20px; z-index: 20;
+    width: 10px; height: 14px; pointer-events: none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0.6; }
+  }
 </style>
 </head>
 <body>
@@ -140,8 +270,8 @@
       <svg class="check" viewBox="0 0 24 24" fill="none" stroke="#009e55" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L19.5 7"/></svg>
       <div class="spin" id="cardSpin"><div class="ring"></div></div>
     </div>
-    <span class="label" id="cardLabel">I'm not a robot</span>
-    <span class="hint" id="cardHint">Verifying...<br>Please wait</span>
+    <span class="label">I'm not a robot</span>
+    <span class="hint" id="cardHint">Loading challenge...</span>
   </div>
   <div class="card-foot">
     <div class="brand">
@@ -157,52 +287,642 @@
   </div>
 </div>
 
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div class="lvl" id="lvlLabel">Level 1 of 9</div>
+      <h2 id="promptTitle">Select all squares with</h2>
+      <p id="promptSub"></p>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="status" id="status"></div>
+    <div class="modal-foot">
+      <button class="icon-btn" id="refreshBtn" title="New challenge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      </button>
+      <button class="icon-btn" id="audioBtn" title="Play audio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+      </button>
+      <button class="action-btn" id="actionBtn">Verify</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function () {
   "use strict";
 
-  var CHECKING_MS = 3000;   // spinner duration after click
-  var RESET_MS = 5000;      // auto refresh delay after verified
+  /* ================= sound engine (WebAudio, all synthesized) ================= */
+  var actx = null;
+  function ac() {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    return actx;
+  }
+  function tone(freq, dur, type, vol, slideTo, when) {
+    var a = ac(), t = a.currentTime + (when || 0);
+    var o = a.createOscillator(), g = a.createGain();
+    o.type = type || "sine";
+    o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(vol || 0.15, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  var S = {
+    click:  function () { tone(620, 0.06, "square", 0.08); },
+    tick:   function () { tone(1250, 0.035, "square", 0.05); },
+    select: function () { tone(760, 0.05, "square", 0.07); tone(1020, 0.05, "square", 0.06, null, 0.04); },
+    pass:   function () { tone(880, 0.12, "sine", 0.14); tone(1174, 0.16, "sine", 0.14, null, 0.1); },
+    fail:   function () { tone(220, 0.28, "sawtooth", 0.12, 110); },
+    pop:    function () { tone(320, 0.09, "sine", 0.16, 640); },
+    thud:   function () { tone(140, 0.1, "sine", 0.12, 90); },
+    chime:  function () { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, 0.35, "sine", 0.13, null, i * 0.12); }); },
+    whoosh: function () {
+      var a = ac(), len = a.sampleRate * 0.35;
+      var buf = a.createBuffer(1, len, a.sampleRate);
+      var d = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      var src = a.createBufferSource(); src.buffer = buf;
+      var f = a.createBiquadFilter(); f.type = "lowpass";
+      f.frequency.setValueAtTime(300, a.currentTime);
+      f.frequency.exponentialRampToValueAtTime(3000, a.currentTime + 0.3);
+      var g = a.createGain(); g.gain.value = 0.12;
+      src.connect(f); f.connect(g); g.connect(a.destination); src.start();
+    },
+    beep:   function (n) { for (var i = 0; i < n; i++) tone(700, 0.09, "square", 0.09, null, i * 0.18); }
+  };
 
+  /* ================= SVG icon library (all hand-drawn) ================= */
+  function strokeSvg(inner) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + inner + "</svg>";
+  }
+  var ICONS = {
+    stopsign: '<svg viewBox="0 0 24 24"><path d="M7.6 3h8.8l4.6 4.6v8.8L16.4 21H7.6L3 16.4V7.6L7.6 3z" fill="#d32f2f" stroke="#a02020" stroke-width="1"/><text x="12" y="14.5" font-size="5.2" font-weight="bold" text-anchor="middle" fill="#fff" font-family="Arial">STOP</text></svg>',
+    car: '<path d="M5 11l1.3-3.8A2 2 0 0 1 8.2 6h7.6a2 2 0 0 1 1.9 1.2L19 11"/><rect x="3.5" y="11" width="17" height="6" rx="2"/><circle cx="7.5" cy="19.5" r="1.5"/><circle cx="16.5" cy="19.5" r="1.5"/>',
+    tree: '<path d="M12 2.5L6.5 10h2L4 16h16l-4.5-6h2L12 2.5z"/><path d="M12 16v5.5"/>',
+    cloud: '<path d="M6 19a5 5 0 0 1-.9-9.92 7 7 0 0 1 13.55 1.42A4 4 0 0 1 18 19H6z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5V5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>',
+    house: '<path d="M4 11.5L12 4l8 7.5"/><path d="M6.5 9.5V20h11V9.5"/><path d="M10 20v-5h4v5"/>',
+    plane: '<path d="M21 3L3 10.5l7 3 3 7L21 3z"/><path d="M21 3L10 13.5"/>',
+    bike: '<circle cx="6" cy="16.5" r="3.2"/><circle cx="18" cy="16.5" r="3.2"/><path d="M6 16.5L9.2 9.5h4.6l4.2 7"/>',
+    // vegetables
+    carrot: '<path d="M9.2 9.2L4.5 19.5 14.8 14.8z"/><path d="M9.2 9.2C9 6 11 4 14 4c-.3 2.5-1.6 4.6-3.5 6"/><path d="M9.2 9.2C12 8 14.3 6.4 15.2 4.3"/>',
+    corn: '<path d="M12 21c-3.5 0-5.5-3-5.5-7.5S9 3 12 3s5.5 6 5.5 10.5S15.5 21 12 21z"/><path d="M9 7.5h6M8.2 11h7.6M8.2 14.5h7.6M9 18h6"/>',
+    eggplant: '<path d="M15.5 6.5c2.5 3.5 2 9-1.5 11.5-3 2.2-7 1.2-8.3-1.8-1.2-2.8.6-5.3 3.3-6.5 2.8-1.2 5-1.7 6.5-3.2z"/><path d="M15.5 6.5c.3-1.5 1.5-2.5 3-2.5"/>',
+    onion: '<circle cx="12" cy="13.5" r="7"/><path d="M12 6.5c0-2 1-3.5 2.5-4.5M12 6.5c0-2-1-3.5-2.5-4.5"/><path d="M8.5 8c-1.4 3.5-1.4 7.5 0 11M15.5 8c1.4 3.5 1.4 7.5 0 11"/>',
+    potato: '<path d="M7 6.5C9 4.5 13 4 16 6c2.5 1.8 3.5 5 2.5 8-1 3.2-4.5 5.5-8 5S4 15.5 4.5 12 5.5 8 7 6.5z"/><path d="M9 10h.01M14 9h.01M10.5 14.5h.01M15 14h.01M12 17h.01"/>',
+    // distractors
+    dog: '<circle cx="6.5" cy="9" r="1.8"/><circle cx="17.5" cy="9" r="1.8"/><circle cx="10" cy="5.5" r="1.8"/><circle cx="14" cy="5.5" r="1.8"/><path d="M12 10.5c-3.2 0-5.8 2.3-5.8 5 0 1.7 1.3 3 3 3 1 0 1.9-.4 2.8-.4s1.8.4 2.8.4c1.7 0 3-1.3 3-3 0-2.7-2.6-5-5.8-5z"/>',
+    tv: '<rect x="4" y="5.5" width="16" height="11" rx="1"/><path d="M8 20.5h8M12 16.5v4"/>',
+    sock: '<path d="M9 3h6v7l4 4.5c1.5 2 .5 5-2.5 5.5-2.5.4-5-.5-7-2.5L9 17V3z"/><path d="M9 6.5h6"/>',
+    phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M10.5 18.5h3"/>',
+    mug: '<path d="M5 6h10v9a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V6z"/><path d="M15 8h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M8 3v1.5M11 3v1.5"/>',
+    flower: '<circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="7" r="2.4"/><circle cx="12" cy="17" r="2.4"/><circle cx="7" cy="12" r="2.4"/><circle cx="17" cy="12" r="2.4"/>',
+    heart: '<path d="M12 20.5S3.5 15 3.5 9.2C3.5 6.3 5.8 4.5 8 4.5c1.7 0 3.2.9 4 2.3.8-1.4 2.3-2.3 4-2.3 2.2 0 4.5 1.8 4.5 4.7C20.5 15 12 20.5 12 20.5z"/>',
+    mole: '<ellipse cx="12" cy="20" rx="8" ry="2.5" fill="#a8845c" stroke="none"/><circle cx="12" cy="12" r="6.5" fill="#7a5a3a" stroke="#5d4128"/><circle cx="9.8" cy="10.5" r="0.8" fill="#000" stroke="none"/><circle cx="14.2" cy="10.5" r="0.8" fill="#000" stroke="none"/><ellipse cx="12" cy="13.5" rx="1.4" ry="1" fill="#e78ba0" stroke="none"/><path d="M9 8.5l-1.5-2M15 8.5l1.5-2" stroke="#5d4128"/>'
+  };
+
+  /* ================= dom ================= */
   var checkbox   = document.getElementById("checkbox");
   var card       = document.getElementById("card");
   var cardSpin   = document.getElementById("cardSpin");
   var cardHint   = document.getElementById("cardHint");
+  var overlay    = document.getElementById("overlay");
+  var modal      = document.getElementById("modal");
+  var lvlLabel   = document.getElementById("lvlLabel");
+  var promptTitle= document.getElementById("promptTitle");
+  var promptSub  = document.getElementById("promptSub");
+  var modalBody  = document.getElementById("modalBody");
+  var statusEl   = document.getElementById("status");
+  var actionBtn  = document.getElementById("actionBtn");
+  var refreshBtn = document.getElementById("refreshBtn");
+  var audioBtn   = document.getElementById("audioBtn");
 
-  var state = { phase: "idle" }; // idle | checking | verified
-  var resetTimer = null;
+  var current = -1;
+  var failMsg = "";
 
+  function shuffle(a) {
+    var r = a.slice();
+    for (var i = r.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = r[i]; r[i] = r[j]; r[j] = t;
+    }
+    return r;
+  }
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+
+  function setStatus(msg, ok) {
+    statusEl.textContent = msg || "";
+    statusEl.className = "status show" + (ok ? " ok" : "");
+  }
+  function clearStatus() { statusEl.className = "status"; statusEl.textContent = ""; }
+
+  /* selection grid helper ---------------------------------------------- */
+  function buildGrid(tiles, cols) {
+    modalBody.innerHTML = "";
+    var grid = document.createElement("div");
+    grid.className = "grid" + (cols === 4 ? " g4" : "");
+    tiles.forEach(function (t) {
+      var tile = document.createElement("div");
+      tile.className = "tile";
+      tile.innerHTML = ICONS[t.icon];
+      tile.addEventListener("click", function () {
+        tile.classList.toggle("selected");
+        S.select();
+      });
+      grid.appendChild(tile);
+    });
+    modalBody.appendChild(grid);
+    return grid;
+  }
+  function checkGrid(grid, key) {
+    var ok = true;
+    grid.querySelectorAll(".tile").forEach(function (tile) {
+      var isT = tile.dataset.target === "1";
+      var sel = tile.classList.contains("selected");
+      if (isT !== sel) ok = false;
+    });
+    return ok;
+  }
+
+  /* ================= levels ================= */
+  var LEVELS = [
+
+    /* ---- 2. stop signs ---- */
+    {
+      prompt: "Select all squares with",
+      target: "stop signs",
+      action: "Verify",
+      init: function () {
+        var others = shuffle(["car", "tree", "cloud", "sun", "house", "plane", "bike"]);
+        var tiles = [];
+        for (var i = 0; i < 9; i++) {
+          tiles.push({ icon: i < 4 ? "stopsign" : others[i - 4], target: i < 4 });
+        }
+        tiles = shuffle(tiles);
+        this.grid = buildGrid(tiles);
+        this.grid.querySelectorAll(".tile").forEach(function (tile, idx) {
+          tile.dataset.target = tiles[idx].target ? "1" : "0";
+        });
+      },
+      verify: function () {
+        if (checkGrid(this.grid)) this.pass(); else this.fail("Those aren't all stop signs. Try again.");
+      }
+    },
+
+    /* ---- 3. wiggly text ---- */
+    {
+      prompt: "Type the letters you see",
+      target: "Click Submit when done. Refresh for a new code.",
+      action: "Submit",
+      init: function () {
+        var chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+        this.code = "";
+        for (var i = 0; i < 5; i++) this.code += chars[Math.floor(Math.random() * chars.length)];
+        modalBody.innerHTML =
+          '<div class="wiggle-box">' +
+          this.code.split("").map(function (c, i) {
+            var d = (Math.random() * 1.2).toFixed(2);
+            var sc = (0.8 + Math.random() * 0.4).toFixed(2);
+            return '<span style="animation-delay:-' + d + 's;transform:scale(' + sc + ')">' + esc(c) + "</span>";
+          }).join("") +
+          "</div>" +
+          '<div class="type-row"><input id="wigInput" maxlength="5" autocomplete="off" spellcheck="false" placeholder="CODE"></div>';
+        var input = document.getElementById("wigInput");
+        input.addEventListener("input", function () { S.tick(); });
+        this.input = input;
+        setTimeout(function () { input.focus(); }, 350);
+      },
+      submit: function () {
+        if (this.input.value.trim().toUpperCase() === this.code) this.pass();
+        else this.fail("Hmm, those wiggles tricked you. New code!");
+      }
+    },
+
+    /* ---- 4. audio captcha ---- */
+    {
+      prompt: "Type what you hear",
+      target: "Turn your sound on. Click the speaker to replay.",
+      action: "Submit",
+      audio: true,
+      init: function () {
+        this.code = "";
+        for (var i = 0; i < 4; i++) this.code += Math.floor(Math.random() * 10);
+        modalBody.innerHTML =
+          '<div class="type-row"><input id="audInput" maxlength="4" autocomplete="off" inputmode="numeric" placeholder="0000" style="letter-spacing:8px"></div>';
+        this.input = document.getElementById("audInput");
+        this.play();
+      },
+      play: function () {
+        var code = this.code, self = this;
+        if (window.speechSynthesis) {
+          speechSynthesis.cancel();
+          code.split("").forEach(function (d, i) {
+            var u = new SpeechSynthesisUtterance(d === "0" ? "zero" : d);
+            u.rate = 0.55; u.pitch = 0.4 + Math.random() * 0.8; u.volume = 1;
+            u.lang = "en-US";
+            setTimeout(function () { speechSynthesis.speak(u); }, i * 900);
+          });
+          S.whoosh();
+        } else {
+          S.beep(parseInt(code, 10) % 10 + 2);
+        }
+      },
+      submit: function () {
+        if (this.input.value.trim() === this.code) this.pass();
+        else this.fail("Wrong digits. Listen again!");
+      }
+    },
+
+    /* ---- 5. vegetables ---- */
+    {
+      prompt: "Select all squares with",
+      target: "vegetables. Yes, all of them.",
+      action: "Verify",
+      init: function () {
+        var veg = shuffle(["carrot", "corn", "eggplant", "onion", "potato"]).slice(0, 4);
+        var not = shuffle(["dog", "tv", "sock", "phone", "mug", "flower", "heart"]).slice(0, 5);
+        var tiles = shuffle(veg.map(function (v) { return { icon: v, target: true }; })
+          .concat(not.map(function (n) { return { icon: n, target: false }; })));
+        this.grid = buildGrid(tiles);
+        this.grid.querySelectorAll(".tile").forEach(function (tile, idx) {
+          tile.dataset.target = tiles[idx].target ? "1" : "0";
+        });
+      },
+      verify: function () {
+        if (checkGrid(this.grid)) this.pass();
+        else this.fail("A dog is not a vegetable. Neither is a sock. Try again.");
+      }
+    },
+
+    /* ---- 6. nested stop signs ---- */
+    {
+      prompt: "Select all squares with",
+      target: "stop signs. All sizes count.",
+      action: "Verify",
+      init: function () {
+        var self = this;
+        modalBody.innerHTML = "";
+        var grid = document.createElement("div");
+        grid.className = "grid";
+        var layout = shuffle([1, 1, 1, 1, 1, 0, 0, 0, 0]); // 5 nested, 4 decoys
+        layout.forEach(function (hasSign) {
+          var tile = document.createElement("div");
+          tile.className = "tile";
+          tile.dataset.target = hasSign ? "1" : "0";
+          if (hasSign) {
+            tile.innerHTML =
+              '<svg viewBox="0 0 24 24">' +
+              '<path d="M7.6 3h8.8l4.6 4.6v8.8L16.4 21H7.6L3 16.4V7.6L7.6 3z" fill="none" stroke="#d32f2f" stroke-width="1.4"/>' +
+              '<g transform="translate(12 12) scale(0.62) translate(-12 -12)"><path d="M7.6 3h8.8l4.6 4.6v8.8L16.4 21H7.6L3 16.4V7.6L7.6 3z" fill="#d32f2f" stroke="#a02020"/><text x="12" y="14.5" font-size="5.2" font-weight="bold" text-anchor="middle" fill="#fff" font-family="Arial">STOP</text></g>' +
+              '<g transform="translate(12 12) scale(0.3) translate(-12 -12)"><path d="M7.6 3h8.8l4.6 4.6v8.8L16.4 21H7.6L3 16.4V7.6L7.6 3z" fill="#d32f2f" stroke="#a02020"/><text x="12" y="14.5" font-size="7" font-weight="bold" text-anchor="middle" fill="#fff" font-family="Arial">S</text></g>' +
+              "</svg>";
+          } else {
+            var decoy = shuffle(["heart", "flower", "sun", "cloud"])[0];
+            tile.innerHTML = ICONS[decoy];
+          }
+          tile.addEventListener("click", function () {
+            tile.classList.toggle("selected");
+            S.select();
+          });
+          grid.appendChild(tile);
+        });
+        modalBody.appendChild(grid);
+        this.grid = grid;
+      },
+      verify: function () {
+        if (checkGrid(this.grid)) this.pass();
+        else this.fail("Did you spot the tiny ones? Try again.");
+      }
+    },
+
+    /* ---- 7. whack-a-mole ---- */
+    {
+      prompt: "Prove your reflexes",
+      target: "Click 5 moles. Fast.",
+      action: "Verify",
+      actionHidden: true,
+      init: function () {
+        var self = this;
+        this.hits = 0;
+        modalBody.innerHTML = "";
+        var grid = document.createElement("div");
+        grid.className = "mole-grid";
+        this.holes = [];
+        for (var i = 0; i < 16; i++) {
+          var hole = document.createElement("div");
+          hole.className = "hole";
+          hole.innerHTML = ICONS.mole;
+          hole.addEventListener("click", function () {
+            if (this.classList.contains("up")) {
+              this.classList.remove("up");
+              self.hits++;
+              S.pop();
+              self.update();
+            } else {
+              S.thud();
+            }
+          });
+          grid.appendChild(hole);
+          this.holes.push(hole);
+        }
+        modalBody.appendChild(grid);
+        this.update();
+        this.timer = setInterval(function () {
+          var downs = self.holes.filter(function (h) { return !h.classList.contains("up"); });
+          if (downs.length) {
+            var h = downs[Math.floor(Math.random() * downs.length)];
+            h.classList.add("up");
+            setTimeout(function () { h.classList.remove("up"); }, 750 + Math.random() * 500);
+          }
+        }, 550);
+      },
+      update: function () {
+        setStatus(this.hits + " / 5 moles clicked", true);
+        if (this.hits >= 5) {
+          clearInterval(this.timer);
+          setTimeout(function () { LEVELS[5].pass(); }, 350);
+        }
+      },
+      cleanup: function () { clearInterval(this.timer); }
+    },
+
+    /* ---- 8. draw a circle ---- */
+    {
+      prompt: "Draw a circle around the dot",
+      target: "85% accuracy or better. Good luck.",
+      action: "Verify",
+      actionHidden: true,
+      init: function () {
+        var self = this;
+        modalBody.innerHTML =
+          '<div class="draw-wrap"><canvas id="circCv" width="336" height="300"></canvas><div class="draw-score" id="circScore"></div></div>';
+        var cv = document.getElementById("circCv");
+        var ctx = cv.getContext("2d");
+        var W = cv.width, H = cv.height, cx = W / 2, cy = H / 2;
+        this.drawing = false; this.pts = []; this.score = 0;
+
+        function bg() {
+          ctx.clearRect(0, 0, W, H);
+          ctx.fillStyle = "#d93025";
+          ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+        }
+        bg();
+        this.bg = bg;
+
+        function pos(e) {
+          var r = cv.getBoundingClientRect();
+          var x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+          var y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+          return { x: x, y: y };
+        }
+        function start(e) {
+          self.drawing = true; self.pts = [pos(e)];
+          e.preventDefault();
+        }
+        function move(e) {
+          if (!self.drawing) return;
+          var p = pos(e);
+          self.pts.push(p);
+          ctx.strokeStyle = "#4285f4"; ctx.lineWidth = 2.5; ctx.lineCap = "round";
+          ctx.beginPath();
+          var last = self.pts[self.pts.length - 2];
+          ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+          e.preventDefault();
+        }
+        function end() {
+          if (!self.drawing) return;
+          self.drawing = false;
+          self.score = self.evalCircle();
+          document.getElementById("circScore").textContent = self.score + "%";
+          if (self.score >= 85) {
+            setStatus(self.score + "% - remarkably round!", true);
+            S.pass();
+            setTimeout(function () { self.pass(); }, 900);
+          } else {
+            S.fail();
+            setStatus(self.score + "% - that's more of a potato. Try again.");
+            setTimeout(function () { self.init(); }, 1100);
+          }
+        }
+        cv.addEventListener("mousedown", start);
+        cv.addEventListener("mousemove", move);
+        window.addEventListener("mouseup", end);
+        cv.addEventListener("touchstart", start, { passive: false });
+        cv.addEventListener("touchmove", move, { passive: false });
+        cv.addEventListener("touchend", end);
+        this.endHandler = end;
+      },
+      evalCircle: function () {
+        var pts = this.pts;
+        if (pts.length < 20) return 0;
+        var cx = 0, cy = 0;
+        pts.forEach(function (p) { cx += p.x; cy += p.y; });
+        cx /= pts.length; cy /= pts.length;
+        var rs = pts.map(function (p) { return Math.hypot(p.x - cx, p.y - cy); });
+        var mean = rs.reduce(function (a, b) { return a + b; }, 0) / rs.length;
+        if (mean < 15) return 0;
+        var vari = rs.reduce(function (a, r) { return a + (r - mean) * (r - mean); }, 0) / rs.length;
+        var cvv = Math.sqrt(vari) / mean;
+        // angular coverage
+        var angs = {};
+        pts.forEach(function (p) {
+          var a = Math.atan2(p.y - cy, p.x - cx);
+          angs[Math.floor(((a + Math.PI) / (2 * Math.PI)) * 24)] = true;
+        });
+        var coverage = Object.keys(angs).length / 24;
+        var score = Math.round(Math.max(0, 100 - cvv * 260) * (0.35 + 0.65 * coverage));
+        return Math.min(99, score);
+      },
+      cleanup: function () {
+        if (this.endHandler) window.removeEventListener("mouseup", this.endHandler);
+      }
+    },
+
+    /* ---- 9. rotate ---- */
+    {
+      prompt: "Rotate the object until it is upright",
+      target: "Drag the mug, or use the arrows.",
+      action: "Verify",
+      init: function () {
+        var self = this;
+        this.angle = 137 + Math.floor(Math.random() * 40);
+        modalBody.innerHTML =
+          '<div class="rot-stage">' +
+          '<svg class="obj" id="rotObj" viewBox="0 0 24 24" fill="none" stroke="#3c4043" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + ICONS.mug + "</svg>" +
+          "</div>" +
+          '<div class="type-row" style="justify-content:center">' +
+          '<button class="icon-btn" id="rotL"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>' +
+          '<button class="icon-btn" id="rotR"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>' +
+          "</div>";
+        this.obj = document.getElementById("rotObj");
+        var dragging = false, lastA = 0, box = this.obj;
+
+        function angleOf(e) {
+          var r = box.getBoundingClientRect();
+          var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+          return Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI;
+        }
+        function down(e) { dragging = true; lastA = angleOf(e); e.preventDefault(); }
+        function move(e) {
+          if (!dragging) return;
+          var a = angleOf(e);
+          self.angle += a - lastA;
+          lastA = a;
+          self.render();
+          e.preventDefault();
+        }
+        function up() { dragging = false; }
+        box.addEventListener("mousedown", down);
+        window.addEventListener("mousemove", move);
+        window.addEventListener("mouseup", up);
+        document.getElementById("rotL").addEventListener("click", function () { self.angle -= 15; S.tick(); self.render(); });
+        document.getElementById("rotR").addEventListener("click", function () { self.angle += 15; S.tick(); self.render(); });
+        this.moveHandler = move; this.upHandler = up;
+        this.render();
+      },
+      render: function () {
+        var norm = ((this.angle % 360) + 360) % 360;
+        this.obj.style.transform = "rotate(" + norm + "deg)";
+      },
+      verify: function () {
+        var norm = ((this.angle % 360) + 360) % 360;
+        if (norm < 8 || norm > 352) this.pass();
+        else this.fail("Still wonky. The handle should face right.");
+      },
+      cleanup: function () {
+        if (this.moveHandler) { window.removeEventListener("mousemove", this.moveHandler); window.removeEventListener("mouseup", this.upHandler); }
+      }
+    },
+
+    /* ---- 10. final confirm ---- */
+    {
+      prompt: "One last question",
+      target: "Are you SURE you're not a robot?",
+      action: "Verify",
+      init: function () {
+        var self = this;
+        this.clicks = 0;
+        modalBody.innerHTML =
+          '<div class="type-row" style="justify-content:center;gap:14px;padding:16px 0">' +
+          '<button class="action-btn" id="yesBtn" style="margin:0">Yes, I\'m sure</button>' +
+          '<button class="action-btn" id="sureBtn" style="margin:0;background:#34a853">Definitely</button>' +
+          "</div>";
+        function press() {
+          self.clicks++;
+          S.select();
+          if (self.clicks === 1) setStatus("The robots also click these buttons...");
+          else if (self.clicks === 2) setStatus("Hmm. One more for confidence.");
+          else self.pass();
+        }
+        document.getElementById("yesBtn").addEventListener("click", press);
+        document.getElementById("sureBtn").addEventListener("click", press);
+      }
+    }
+  ];
+
+  /* ================= level flow ================= */
+  function showLevel(i) {
+    current = i;
+    var lv = LEVELS[i];
+    clearStatus();
+    lvlLabel.textContent = "Level " + (i + 1) + " of " + LEVELS.length;
+    promptTitle.innerHTML = lv.prompt + (lv.target && lv.prompt.indexOf("with") !== -1 ? " <b>" + lv.target.split(".")[0] + "</b>" : "");
+    promptSub.textContent = lv.prompt.indexOf("with") !== -1 ? lv.target : "";
+    actionBtn.textContent = lv.action || "Verify";
+    actionBtn.style.display = lv.actionHidden ? "none" : "";
+    audioBtn.style.display = lv.audio ? "" : "none";
+    lv.pass = pass; lv.fail = fail;
+    lv.init();
+  }
+
+  function pass() {
+    var lv = LEVELS[current];
+    if (lv.cleanup) lv.cleanup();
+    S.chime();
+    setStatus("Verified!", true);
+    setTimeout(function () {
+      if (current < LEVELS.length - 1) {
+        S.whoosh();
+        showLevel(current + 1);
+      } else {
+        showFinal();
+      }
+    }, 800);
+  }
+
+  function fail(msg) {
+    S.fail();
+    modal.classList.remove("shake");
+    void modal.offsetWidth;
+    modal.classList.add("shake");
+    setStatus(msg);
+    var lv = LEVELS[current];
+    setTimeout(function () {
+      clearStatus();
+      if (lv.cleanup) lv.cleanup();
+      lv.init();
+    }, 1100);
+  }
+
+  function showFinal() {
+    overlay.classList.add("show");
+    card.classList.add("success");
+    checkbox.classList.remove("hidden");
+    checkbox.classList.add("checked");
+    cardSpin.classList.remove("show");
+    cardHint.classList.remove("show");
+    lvlLabel.textContent = "Verification complete";
+    promptTitle.textContent = "You are (probably) human";
+    promptSub.textContent = "";
+    statusEl.textContent = "";
+    modalBody.innerHTML =
+      '<div class="final">' +
+      '<h2>Congratulations</h2>' +
+      '<p>You passed all ' + LEVELS.length + ' challenges. Statistically, you are human.</p>' +
+      '<div class="cert">CERTIFICATE OF HUMANITY</div>' +
+      "</div>";
+    actionBtn.style.display = "";
+    actionBtn.textContent = "Start Over";
+    actionBtn.onclick = function () { location.reload(); };
+    refreshBtn.style.display = "none";
+    audioBtn.style.display = "none";
+    confetti();
+  }
+
+  function confetti() {
+    var colors = ["#4285f4", "#ea4335", "#fbbc05", "#34a853", "#a142f4"];
+    for (var i = 0; i < 80; i++) {
+      var c = document.createElement("div");
+      c.className = "confetti";
+      c.style.left = Math.random() * 100 + "vw";
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.animationDuration = 2.2 + Math.random() * 2 + "s";
+      c.style.animationDelay = Math.random() * 0.8 + "s";
+      c.style.transform = "rotate(" + Math.random() * 360 + "deg)";
+      document.body.appendChild(c);
+      (function (el) { setTimeout(function () { el.remove(); }, 5200); })(c);
+    }
+  }
+
+  /* ================= flow start ================= */
   function startVerification() {
-    if (state.phase !== "idle") return;
-    state.phase = "checking";
-
-    // checkbox fades out, spinner fades in at the same spot
+    if (current !== -1) return;
+    S.click();
     checkbox.classList.add("hidden");
     cardSpin.classList.add("show");
     cardHint.classList.add("show");
     checkbox.style.pointerEvents = "none";
 
     setTimeout(function () {
-      state.phase = "verified";
-      // spinner fades out first, check mark pops in with a green pulse
       cardSpin.classList.remove("show");
       cardHint.classList.remove("show");
-      card.classList.add("success");
-      checkbox.classList.add("checked");
-      checkbox.setAttribute("aria-checked", "true");
-      window.dispatchEvent(new CustomEvent("verification:passed"));
-
-      resetTimer = setTimeout(reset, RESET_MS);
-    }, CHECKING_MS);
-  }
-
-  function reset() {
-    state.phase = "idle";
-    card.classList.remove("success");
-    checkbox.classList.remove("checked", "hidden");
-    checkbox.setAttribute("aria-checked", "false");
-    checkbox.style.pointerEvents = "";
-    window.dispatchEvent(new CustomEvent("verification:reset"));
+      S.whoosh();
+      overlay.classList.add("show");
+      showLevel(0);
+    }, 1400);
   }
 
   checkbox.addEventListener("click", startVerification);
@@ -210,13 +930,29 @@
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startVerification(); }
   });
 
-  window.SafeCheck = {
-    isVerified: function () { return state.phase === "verified"; },
-    reset: function () {
-      if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
-      reset();
+  refreshBtn.addEventListener("click", function () {
+    S.click();
+    var lv = LEVELS[current];
+    if (lv) {
+      if (lv.cleanup) lv.cleanup();
+      clearStatus();
+      lv.init();
     }
-  };
+  });
+
+  audioBtn.addEventListener("click", function () {
+    var lv = LEVELS[current];
+    if (lv && lv.play) lv.play();
+  });
+
+  actionBtn.addEventListener("click", function () {
+    S.click();
+    var lv = LEVELS[current];
+    if (lv && actionBtn.textContent !== "Start Over") {
+      if (lv.submit) lv.submit();
+      else if (lv.verify) lv.verify();
+    }
+  });
 })();
 </script>
 </body>
