@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Human Verification</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: Roboto, -apple-system, "Segoe UI", Arial, sans-serif;
+    background: #fafafa;
+    color: #1f1f1f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  /* ===== reCAPTCHA-style widget ===== */
+  .card {
+    background: #f9f9f9;
+    border: 1px solid #d3d3d3;
+    border-radius: 3px;
+    width: 304px;
+    padding: 12px 12px 10px;
+    box-shadow: 0 0 4px 1px rgba(0,0,0,0.08);
+    transition: border-color .5s ease, box-shadow .5s ease, transform .3s ease;
+  }
+  .card.success {
+    border-color: #d1e7d9;
+    box-shadow: 0 0 4px 1px rgba(0,158,85,0.18), 0 0 18px rgba(0,158,85,0.12);
+  }
+
+  .card-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 34px;
+  }
+
+  /* checkbox box: holds checkbox / spinner / green check in the same slot */
+  .checkbox {
+    width: 28px; height: 28px;
+    border: 2px solid #c1c1c1;
+    border-radius: 2px;
+    background: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    transition: border-color .35s ease, background .35s ease, transform .2s ease;
+  }
+  .checkbox:hover { border-color: #b0b0b0; transform: scale(1.05); }
+  .checkbox.hidden { border-color: transparent; background: transparent; cursor: default; transform: scale(0.9); }
+  .checkbox.checked { border-color: transparent; background: transparent; cursor: default; }
+
+  .checkbox svg.check {
+    width: 30px; height: 30px;
+    opacity: 0;
+    transform: scale(0.2) rotate(-30deg);
+    transition: all .45s cubic-bezier(.34,1.56,.64,1) .1s;
+  }
+  .checkbox.checked svg.check { opacity: 1; transform: scale(1) rotate(0deg); }
+
+  /* reCAPTCHA-style spinner (blue arc) */
+  .spin {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity .3s ease, transform .3s ease;
+    pointer-events: none;
+  }
+  .spin.show { opacity: 1; transform: scale(1); }
+  .spin .ring {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: #4285f4;
+    border-right-color: #4285f4;
+    border-bottom-color: rgba(66,133,244,0.35);
+    animation: rot .9s linear infinite;
+  }
+  @keyframes rot { to { transform: rotate(360deg); } }
+
+  .card-row .label { font-size: 14px; color: #000; user-select: none; transition: color .5s ease; }
+  .card.success .card-row .label { color: #009e55; }
+
+  .card-row .hint {
+    margin-left: auto;
+    font-size: 10px;
+    color: #9aa0a6;
+    text-align: right;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateX(8px);
+    transition: opacity .35s ease, transform .35s ease;
+    pointer-events: none;
+  }
+  .card-row .hint.show { opacity: 1; transform: translateX(0); }
+
+  /* success pulse on the check mark */
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(0,158,85,0.35); }
+    100% { box-shadow: 0 0 0 22px rgba(0,158,85,0); }
+  }
+  .checkbox.checked { animation: pulse 1s ease-out 0.15s; }
+
+  /* footer: reCAPTCHA logo + links, like the real widget */
+  .card-foot {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+    text-align: center;
+  }
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+  }
+  .brand svg { width: 30px; height: 30px; }
+  .brand .name { font-size: 10px; color: #9aa0a6; margin-top: 3px; }
+  .brand .links { font-size: 8px; color: #9aa0a6; margin-top: 3px; }
+  .brand .links a { color: #9aa0a6; text-decoration: none; }
+  .brand .links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="card" id="card">
+  <div class="card-row">
+    <div class="checkbox" id="checkbox" role="checkbox" aria-checked="false" tabindex="0">
+      <svg class="check" viewBox="0 0 24 24" fill="none" stroke="#009e55" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L19.5 7"/></svg>
+      <div class="spin" id="cardSpin"><div class="ring"></div></div>
+    </div>
+    <span class="label" id="cardLabel">I'm not a robot</span>
+    <span class="hint" id="cardHint">Verifying...<br>Please wait</span>
+  </div>
+  <div class="card-foot">
+    <div class="brand">
+      <svg viewBox="0 0 48 48" fill="none">
+        <path d="M40 24a16 16 0 1 1-6.5-12.87" stroke="#4285f4" stroke-width="5" stroke-linecap="round"/>
+        <path d="M42 12L36.5 17.5 30 12h12z" fill="#4285f4" transform="translate(-4 0)"/>
+        <path d="M8 30a16 16 0 0 0 10 10" stroke="#ababab" stroke-width="5" stroke-linecap="round"/>
+        <path d="M20 41.5l-4.5 1L14 38" stroke="#ababab" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="name">reCAPTCHA</span>
+      <span class="links"><a href="#">Privacy</a> - <a href="#">Terms</a></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CHECKING_MS = 3000;   // spinner duration after click
+  var RESET_MS = 5000;      // auto refresh delay after verified
+
+  var checkbox   = document.getElementById("checkbox");
+  var card       = document.getElementById("card");
+  var cardSpin   = document.getElementById("cardSpin");
+  var cardHint   = document.getElementById("cardHint");
+
+  var state = { phase: "idle" }; // idle | checking | verified
+  var resetTimer = null;
+
+  function startVerification() {
+    if (state.phase !== "idle") return;
+    state.phase = "checking";
+
+    // checkbox fades out, spinner fades in at the same spot
+    checkbox.classList.add("hidden");
+    cardSpin.classList.add("show");
+    cardHint.classList.add("show");
+    checkbox.style.pointerEvents = "none";
+
+    setTimeout(function () {
+      state.phase = "verified";
+      // spinner fades out first, check mark pops in with a green pulse
+      cardSpin.classList.remove("show");
+      cardHint.classList.remove("show");
+      card.classList.add("success");
+      checkbox.classList.add("checked");
+      checkbox.setAttribute("aria-checked", "true");
+      window.dispatchEvent(new CustomEvent("verification:passed"));
+
+      resetTimer = setTimeout(reset, RESET_MS);
+    }, CHECKING_MS);
+  }
+
+  function reset() {
+    state.phase = "idle";
+    card.classList.remove("success");
+    checkbox.classList.remove("checked", "hidden");
+    checkbox.setAttribute("aria-checked", "false");
+    checkbox.style.pointerEvents = "";
+    window.dispatchEvent(new CustomEvent("verification:reset"));
+  }
+
+  checkbox.addEventListener("click", startVerification);
+  checkbox.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startVerification(); }
+  });
+
+  window.SafeCheck = {
+    isVerified: function () { return state.phase === "verified"; },
+    reset: function () {
+      if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
+      reset();
+    }
+  };
+})();
+</script>
+</body>
+</html>
